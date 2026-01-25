@@ -1,11 +1,7 @@
-//PRIMETIME TYPE DELAY FOR PATCH WORKING BETTER
 #include "DaisyDuino.h"
-
-// Set max delay time to 0.75 of samplerate.
 #define MAX_DELAY static_cast<size_t>(48000 * 1.5f)
 
 static DaisyHardware hw;
-
 static DelayLine<float, MAX_DELAY> DSY_SDRAM_BSS dell;
 static DelayLine<float, MAX_DELAY> DSY_SDRAM_BSS delr;
 
