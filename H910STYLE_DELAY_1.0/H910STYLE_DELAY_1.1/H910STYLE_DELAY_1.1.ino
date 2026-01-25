@@ -1,3 +1,5 @@
+//H910 Style Delay, written by Miles Comstock with the help of examples from Stephen Hensley and Ben Sergentanis
+//Version 1.1
 #include "DaisyDuino.h"
 #define MAX_DELAY static_cast<size_t>(48000 * 1.5f)
 
@@ -5,32 +7,21 @@ static DaisyHardware hw;
 static DelayLine<float, MAX_DELAY> DSY_SDRAM_BSS dell;
 static DelayLine<float, MAX_DELAY> DSY_SDRAM_BSS delr;
 
-Svf holdFilt, holdFiltR;
 PitchShifter ps, ps2;
 float k1, k2, k3, k4;
 float sample_rate;
 float currentDelay, feedback, delayTarget, cutoff;
-float outlCopy, outrCopy, outlFilt, outrFilt;
-float lastoutl, lastoutr;
+float outlCopy, outrCopy;
 float shifted, unshifted, shifted2, unshifted2;
-float drywet;
-int dCount = 1;
-int feedMode, prevfeedMode;
-int aCount = 1;
+int feedMode;
 bool infinFeed;
 
-int DECIM = 1;   // 48k / 4 = 12 kHz
 
-
-// Helper functions
 void Controls();
-
 void GetDelaySample(float &outl, float &outr, float inl, float inr);
-
 void AudioCallback(float **in, float **out, size_t size) {
   float outl, outr, inl, inldry, inr, inrdry;
   static int decimCounter = 0;
-
   Controls();
 
   // audio
@@ -38,7 +29,6 @@ void AudioCallback(float **in, float **out, size_t size) {
     inl = in[0][i];
     inldry = inl;
     inr = in[1][i];
-      // Only update delay engine every N samples
     unshifted2 = inl;
     shifted2 = ps2.Process(unshifted2);
     GetDelaySample(outl, outr, inl, inr);
@@ -52,21 +42,17 @@ void AudioCallback(float **in, float **out, size_t size) {
       out[0][i] = (inldry * k3) + ((shifted + shifted2) * k4);
       out[1][i] = (outr * k4) + (inr * k3);
     }
-    //out[0][i] = inl + shifted;
   }
 } 
 
 void setup() {
-  // Inits and sample rate
   hw = DAISY.init(DAISY_PATCH, AUDIO_SR_48K);
   DAISY.SetAudioBlockSize(32);
-  //num_channels = hw.num_channels;
   sample_rate = DAISY.get_samplerate();
 
   ps.Init(sample_rate);
   ps2.Init(sample_rate);
 
-  // set transposition 1 octave up (12 semitones)
   ps.SetTransposition(12.0f);
   ps.SetDelSize(4096);
   ps2.SetDelSize(4096);
@@ -74,26 +60,14 @@ void setup() {
 
   dell.Init();
   delr.Init();
-  holdFilt.Init(sample_rate);
-  holdFilt.SetRes(0);
-  holdFilt.SetDrive(0);
-  holdFilt.SetFreq(2000);
 
-  holdFiltR.Init(sample_rate);
-  holdFiltR.SetRes(0);
-  holdFiltR.SetDrive(0);
-  holdFiltR.SetFreq(2000);
-
-  // delay parameters
   currentDelay = delayTarget = (sample_rate * 0.75f);
   dell.SetDelay(currentDelay);
   delr.SetDelay(currentDelay);
   Serial.begin(9600);
-  // start callback
   DAISY.begin(AudioCallback);
   feedMode = 0;
   infinFeed = 0;
-
 }
 
 void loop() {}
@@ -107,17 +81,16 @@ void UpdateKnobs(float &k1, float &k2) {
   if(k2 > 0.89){
     k2 = 0.89;
   }
-  ps.SetTransposition(0.0f + feedMode);
-  ps2.SetTransposition(0.0f + feedMode);
+  ps.SetTransposition(feedMode);
+  ps2.SetTransposition(feedMode);
 
   float m = (float)MAX_DELAY - .05 * sample_rate;
 	delayTarget = (k1 * m + .05 * sample_rate);
   feedMode += hw.encoder.Increment();
-  DECIM = feedMode;
   if(feedMode > 12){
     feedMode = 12;
   }
-  if(feedMode <-12){
+  if(feedMode < -12){
     feedMode = -12;
   }
   Serial.println(feedMode);
@@ -139,7 +112,6 @@ void Controls() {
 
 
 void GetDelaySample(float &outl, float &outr, float inl, float inr) {
-  dCount++;
   fonepole(currentDelay, delayTarget, .00007f);
   delr.SetDelay(currentDelay);
   dell.SetDelay(currentDelay / 2);
@@ -151,11 +123,10 @@ void GetDelaySample(float &outl, float &outr, float inl, float inr) {
   else{
     dell.Write((feedback * shifted) + inl);
   }
+  delr.Write((feedback * outr) + inr);
 
   outl = (feedback * outl);
-
   outr = delr.Read();
-  delr.Write((feedback * outr) + inr);
   outr = (feedback * outr);
 
 }
