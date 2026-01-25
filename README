@@ -16,3 +16,5 @@ IN 2 (right)
 
 OUT 1 (left, pitch shifted)
 OUT 2 (right, delay only)
+
+patch notes:
