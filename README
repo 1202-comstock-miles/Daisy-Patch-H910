@@ -1,0 +1,18 @@
+This code is to be installed on the Daisy Patch Eurorack Module.
+It functions similar to an Eventide H-910 Harmonizer and Delay
+
+The controls:
+CRTL 1: Delay time
+CTRL 2: Feedback
+CTRL 3: Dry signal level
+CTRL 4: Wet signal level
+Encoder: Changes pitch shift ratio (+ or - 1 semitone)
+Encoder push: changes back and forth from pitch shifter mode to delay only mode. (default is pitch shift mode)
+
+Each audio channel has its own separate delay line
+Audio channels:
+IN 1 (left)
+IN 2 (right)
+
+OUT 1 (left, pitch shifted)
+OUT 2 (right, delay only)
