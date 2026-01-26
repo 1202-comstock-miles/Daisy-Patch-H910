@@ -1,6 +1,8 @@
 This code is to be installed on the Daisy Patch Eurorack Module.
 It functions similar to an Eventide H-910 Harmonizer and Delay
 
+This code utilizes the DaisyDuino.h and U8g2lib.h libraries
+
 The controls:
 CRTL 1: Delay time
 CTRL 2: Feedback
