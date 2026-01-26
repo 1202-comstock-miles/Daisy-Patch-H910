@@ -1,4 +1,4 @@
-//H910 Style Delay, written by Miles Comstock with the help of examples from Stephen Hensley and Ben Sergentanis
+//H910 Style Delay, written by Miles Comstock
 //Version 1.2
 
 #include "DaisyDuino.h"
