@@ -2,7 +2,7 @@
 //Version 1.2
 
 #include "DaisyDuino.h"
-#include <U8g2lib.h>
+#include <U8g2lib.h> 
 #define MAX_DELAY static_cast<size_t>(48000 * 1.5f)
 
 static DaisyHardware hw;
@@ -10,7 +10,8 @@ static DelayLine<float, MAX_DELAY> DSY_SDRAM_BSS dell;
 static DelayLine<float, MAX_DELAY> DSY_SDRAM_BSS delr;
 
 PitchShifter ps, ps2;
-float k1, k2, k3, k4;
+
+float k1, k2, k3, k4; //Declarations for delay lines and audio
 float sample_rate;
 float currentDelay, currentDelayR, feedback, delayTarget, delayTargetR, cutoff;
 float outlCopy, outrCopy;
@@ -24,7 +25,7 @@ U8G2_SSD1309_128X64_NONAME2_F_4W_SW_SPI oled(U8G2_R0, /* clock=*/8,
                                              /* data=*/10, /* cs=*/7, /* dc=*/9,
                                              /* reset=*/30);
 
-int x, y;
+int x, y; //Declarations for OLED
 int xvel, yvel;
 char str[] = "daisypatch";
 int pos;
@@ -46,10 +47,12 @@ void AudioCallback(float **in, float **out, size_t size) {
     GetDelaySample(outl, outr, inl, inr);
     unshifted = outl;
     shifted = ps.Process(unshifted);
+	//if in delay only mode
     if(infinFeed == 1){
       out[0][i] = (outl * k4) + (inldry * k3);
       out[1][i] = (outr * k4) + (inr * k3);
     }
+	//else in pitch shift mode
     else{
       out[0][i] = (inldry * k3) + ((shifted + shifted2) * k4);
       out[1][i] = (outr * k4) + (inr * k3);
@@ -58,7 +61,7 @@ void AudioCallback(float **in, float **out, size_t size) {
 } 
 
 void setup() {
-  hw = DAISY.init(DAISY_PATCH, AUDIO_SR_48K);
+  hw = DAISY.init(DAISY_PATCH, AUDIO_SR_48K);		//Initializing everything
   DAISY.SetAudioBlockSize(32);
   sample_rate = DAISY.get_samplerate();
 
@@ -96,8 +99,8 @@ void setup() {
 
 void loop() {
   Serial.println(currentDelayR+Doffset);
-  char buf[8];
-  if(counter == 1){
+  char buf[8]; //screen character buffer
+  if(counter == 1){						//Only updates the OLED once every 32 loops
     oled.clearBuffer();
     if(infinFeed == 0){
       itoa(feedMode, buf, 10);         // convert int -> string (base 10)
@@ -107,7 +110,7 @@ void loop() {
     }
     int w = oled.getStrWidth(buf);   // text width in pixels
     int h = oled.getAscent();        // font ascent (~42)
-    int x = (128 - w) / 2;
+    int x = (128 - w) / 2;			 //Keeps text in middle of the OLED
     int y = (64 + h) / 2;
     
     oled.drawStr(x, y, buf);
@@ -116,19 +119,19 @@ void loop() {
     oled.sendBuffer();
   }
   counter++;
-  if (counter>32){
+  if (counter>32){ 						//resets loop counter
     counter = 1;
   }
 
 }
 
 void UpdateKnobs(float &k1, float &k2, float&k3, float&k4) {
-  k1 = 1 - (analogRead(PIN_PATCH_CTRL_1) / 1023.f);
+  k1 = 1 - (analogRead(PIN_PATCH_CTRL_1) / 1023.f);		//Analog read for knob controls
   k2 = 1 - (analogRead(PIN_PATCH_CTRL_2) / 1023.f);
   k3 = 1 - (analogRead(PIN_PATCH_CTRL_3) / 1023.f);
   k4 = 1 - (analogRead(PIN_PATCH_CTRL_4) / 1023.f);
 
-  if(k2 > 0.89){
+  if(k2 > 0.89){ 						//Crude way to keep feedback from getting so high that Daisy crashes on pitch shift mode
     k2 = 0.89;
   }
   ps.SetTransposition(feedMode);
@@ -137,20 +140,21 @@ void UpdateKnobs(float &k1, float &k2, float&k3, float&k4) {
   float m = (float)MAX_DELAY - .05 * sample_rate;
 	delayTarget = (k1 * m + .05 * sample_rate);
   delayTargetR = (k1 * m + .05 * sample_rate);
-  if(infinFeed == 0){
+	
+  if(infinFeed == 0){						//if in pitch shift mode increment pitch shift ratio each encoder turn
     feedMode += hw.encoder.Increment();
   }
   else{
-    Doffset += (hw.encoder.Increment() * 250);
-    if(Doffset > 100000){
+    Doffset += (hw.encoder.Increment() * 250);	//if in delay only mode increment R delay offset each encoder turn
+    if(Doffset > 100000){						//Max R delay offset increase at 100000 addresses
       Doffset = 100000;
     }
-    if(Doffset + currentDelayR < 1){
+    if(Doffset + currentDelayR < 1){			//Maximum negative R delay offset can never be less than the minimum delay time
       fonepole(Doffset, 1.0f - currentDelayR, 0.0007f);
     }
   }
 
-  if(feedMode > 12){
+  if(feedMode > 12){							//Sets maxiumum and minimum pitch shift ratios
     feedMode = 12;
   }
   if(feedMode < -12){
@@ -168,35 +172,35 @@ void Controls() {
   if(feedback > 0.89){
     feedback = 0.89;
   }
-  hw.DebounceControls();
+  hw.DebounceControls();						//Hardware debounce for encoder pushes
   //hw.ProcessDigitalControls();
-  if(hw.encoder.RisingEdge()){
+  if(hw.encoder.RisingEdge()){					//If encoder pushed down change mode
     infinFeed = !infinFeed;
   }
 }
 
 
 void GetDelaySample(float &outl, float &outr, float inl, float inr) {
-  if(infinFeed == 1){
+  if(infinFeed == 1){							//If delay only mode add offset to R delay line
     fonepole(currentDelayR, delayTargetR + Doffset, .00007f);
     fonepole(currentDelay, delayTarget, .00007f);
     dell.SetDelay(currentDelay);
     delr.SetDelay(currentDelayR);
   }
   else{
-    fonepole(currentDelay, delayTarget, .00007f);
+    fonepole(currentDelay, delayTarget, .00007f);		//otherwise left and right delay lines are seperate but same times
     delr.SetDelay(currentDelay);
     dell.SetDelay(currentDelay);
 
   }
 
   outl = dell.Read();
-  outr = delr.Read(); //Must be first
+  outr = delr.Read(); 								//Must be before write
 
-  if(infinFeed == 1){
+  if(infinFeed == 1){								//if delay only mode
     dell.Write((feedback * outl) + inl);
   }
-  else{
+  else{												//if pitch shift mode
     dell.Write((feedback * shifted) + inl);
   }
   delr.Write((feedback * outr) + inr);
