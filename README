@@ -6,16 +6,22 @@ CRTL 1: Delay time
 CTRL 2: Feedback
 CTRL 3: Dry signal level
 CTRL 4: Wet signal level
-Encoder: Changes pitch shift ratio (+ or - 1 semitone)
+
+Encoder (IN PITCH SHIFT MODE): Changes pitch shift ratio (+ or - 1 semitone)
+Encoder (IN DELAY ONLY MODE): Shifts right delay line time by + or - 250 memory addresses per turn
 Encoder push: changes back and forth from pitch shifter mode to delay only mode. (default is pitch shift mode)
 
-Each audio channel has its own separate delay line
+Both the left and right audio channels have their own delay lines in both modes
+In pitch shift mode the delay times are locked to the same time for each channel
+In delay only mode you can offset the right delay line from the left delay line's time to achieve a ping pong effect
+
 Audio channels:
-IN 1 (left)
-IN 2 (right)
+IN 1 (left, pitch shifted when in pitch shift mode)
+IN 2 (right, offset delay line when in delay only mode)
 
 OUT 1 (left, pitch shifted)
-OUT 2 (right, delay only)
+OUT 2 (right, offset delay line in delay only mode)
 
 patch notes:
 1.1: Cleaned up code a tiny bit
+1.2 added OLED functionality and ability to offset right delay line in delay only mode
