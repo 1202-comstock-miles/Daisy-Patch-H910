@@ -14,15 +14,16 @@ Encoder (IN DELAY ONLY MODE): Shifts right delay line time by + or - 250 memory 
 Encoder push: changes back and forth from pitch shifter mode to delay only mode. (default is pitch shift mode)
 
 Both the left and right audio channels have their own delay lines in both modes
-In pitch shift mode the delay times are locked to the same time for each channel
-In delay only mode you can offset the right delay line from the left delay line's time to achieve a ping pong effect
+The left channel is the pitch shifted channel, the right channel is delay only (in pitch shift mode)
+In pitch shift mode the delay times are set to the same time for each channel,
+However, in delay only mode you can offset the right delay line from the left delay line's time to achieve two different delay times
 
 Audio channels:
-IN 1 (left, pitch shifted when in pitch shift mode)
-IN 2 (right, offset delay line when in delay only mode)
+IN 1 (left, pitch shifted and delayed when in pitch shift mode)
+IN 2 (right, delay only)
 
-OUT 1 (left, pitch shifted)
-OUT 2 (right, offset delay line in delay only mode)
+OUT 1 (left, pitch shifted and delay in pitch shift mode)
+OUT 2 (right, delay only)
 
 patch notes:
 1.1: Cleaned up code a tiny bit
