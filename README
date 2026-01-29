@@ -9,7 +9,7 @@ CTRL 2: Feedback
 CTRL 3: Dry signal level
 CTRL 4: Wet signal level
 
-Encoder (IN PITCH SHIFT MODE): Changes pitch shift ratio (+ or - 1 semitone)
+Encoder (IN PITCH SHIFT MODE): Changes pitch shift ratio (+ or - 10 cents)
 Encoder (IN DELAY ONLY MODE): Shifts right delay line time by + or - 250 memory addresses per turn
 Encoder push: changes back and forth from pitch shifter mode to delay only mode. (default is pitch shift mode)
 
