@@ -1,5 +1,5 @@
-//H910 Style Delay, written by Miles Comstock
-//Version 1.2
+//H910 Style Delay, written by Miles Comstock with the help of examples from Stephen Hensley and Ben Sergentanis
+//Version 1.3
 
 #include "DaisyDuino.h"
 #include <U8g2lib.h> 
@@ -16,7 +16,7 @@ float sample_rate;
 float currentDelay, currentDelayR, feedback, delayTarget, delayTargetR, cutoff;
 float outlCopy, outrCopy;
 float shifted, unshifted, shifted2, unshifted2;
-int feedMode;
+float feedMode;
 int counter;
 bool infinFeed;
 float Doffset, DoffsetLast;
@@ -81,7 +81,7 @@ void setup() {
   xvel = yvel = -1;
   pos = 0;
 
-  oled.setFont(u8g2_font_inb30_mf);
+  oled.setFont(u8g2_font_inb24_mf);
   oled.setFontDirection(0);
   oled.setFontMode(1);
   oled.begin();
@@ -98,19 +98,25 @@ void setup() {
 }
 
 void loop() {
-  Serial.println(currentDelayR+Doffset);
-  char buf[8]; //screen character buffer
-  if(counter == 1){						//Only updates the OLED once every 32 loops
+  Serial.println(currentDelayR + Doffset);
+
+  char buf[12]; // screen character buffer
+
+  if(counter == 1){ // Only updates the OLED once every 32 loops
     oled.clearBuffer();
-    if(infinFeed == 0){
-      itoa(feedMode, buf, 10);         // convert int -> string (base 10)
-    }
-    else{
-      itoa(Doffset, buf, 10);         // convert int -> string (base 10)
-    }
-    int w = oled.getStrWidth(buf);   // text width in pixels
-    int h = oled.getAscent();        // font ascent (~42)
-    int x = (128 - w) / 2;			 //Keeps text in middle of the OLED
+
+  if(infinFeed == 0)
+  {
+      itoa((int)feedMode, buf, 10);   // convert feedMode to integer string
+  }
+  else
+  {
+      itoa((int)Doffset, buf, 10);    // convert Doffset to integer string
+  }
+
+    int w = oled.getStrWidth(buf); // text width in pixels
+    int h = oled.getAscent();      // font ascent (~42)
+    int x = (128 - w) / 2;         // Keeps text in middle of the OLED
     int y = (64 + h) / 2;
     
     oled.drawStr(x, y, buf);
@@ -134,15 +140,17 @@ void UpdateKnobs(float &k1, float &k2, float&k3, float&k4) {
   if(k2 > 0.89){ 						//Crude way to keep feedback from getting so high that Daisy crashes on pitch shift mode
     k2 = 0.89;
   }
-  ps.SetTransposition(feedMode);
-  ps2.SetTransposition(feedMode);
 
   float m = (float)MAX_DELAY - .05 * sample_rate;
 	delayTarget = (k1 * m + .05 * sample_rate);
   delayTargetR = (k1 * m + .05 * sample_rate);
 	
   if(infinFeed == 0){						//if in pitch shift mode increment pitch shift ratio each encoder turn
-    feedMode += hw.encoder.Increment();
+    feedMode += hw.encoder.Increment() * 10;
+   // ps.SetTransposition(feedMode);
+   // ps2.SetTransposition(feedMode);
+    ps.SetCents(feedMode);   // 37.5 cents
+    ps2.SetCents(feedMode);
   }
   else{
     Doffset += (hw.encoder.Increment() * 250);	//if in delay only mode increment R delay offset each encoder turn
@@ -154,18 +162,17 @@ void UpdateKnobs(float &k1, float &k2, float&k3, float&k4) {
     }
   }
 
-  if(feedMode > 12){							//Sets maxiumum and minimum pitch shift ratios
-    feedMode = 12;
+  if(feedMode > 1200){							//Sets maxiumum and minimum pitch shift ratios
+    feedMode = 1200;
   }
-  if(feedMode < -12){
-    feedMode = -12;
+  if(feedMode < -1200){
+    feedMode = -1200;
   }
   
 }
 void Controls() {
   delayTarget = feedback = 0;
   delayTargetR = feedback = 0;
-
   UpdateKnobs(k1, k2, k3, k4);
 
   feedback = k2;
